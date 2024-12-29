@@ -29,27 +29,39 @@
 // Monster palette
 
 BEGIN_EVENT_TABLE(MonsterPalettePanel, PalettePanel)
-	EVT_CHOICE(PALETTE_MONSTER_TILESET_CHOICE, MonsterPalettePanel::OnTilesetChange)
+EVT_CHOICE(PALETTE_MONSTER_TILESET_CHOICE, MonsterPalettePanel::OnTilesetChange)
 
-	EVT_LISTBOX(PALETTE_MONSTER_LISTBOX, MonsterPalettePanel::OnListBoxChange)
+EVT_LISTBOX(PALETTE_MONSTER_LISTBOX, MonsterPalettePanel::OnListBoxChange)
 
-	EVT_TOGGLEBUTTON(PALETTE_MONSTER_BRUSH_BUTTON, MonsterPalettePanel::OnClickMonsterBrushButton)
-	EVT_TOGGLEBUTTON(PALETTE_SPAWN_MONSTER_BRUSH_BUTTON, MonsterPalettePanel::OnClickSpawnMonsterBrushButton)
+EVT_TOGGLEBUTTON(PALETTE_MONSTER_BRUSH_BUTTON, MonsterPalettePanel::OnClickMonsterBrushButton)
+EVT_TOGGLEBUTTON(PALETTE_SPAWN_MONSTER_BRUSH_BUTTON, MonsterPalettePanel::OnClickSpawnMonsterBrushButton)
 
-	EVT_SPINCTRL(PALETTE_MONSTER_SPAWN_TIME, MonsterPalettePanel::OnChangeSpawnMonsterTime)
-	EVT_SPINCTRL(PALETTE_MONSTER_SPAWN_SIZE, MonsterPalettePanel::OnChangeSpawnMonsterSize)
+EVT_SPINCTRL(PALETTE_MONSTER_SPAWN_TIME, MonsterPalettePanel::OnChangeSpawnMonsterTime)
+EVT_SPINCTRL(PALETTE_MONSTER_SPAWN_SIZE, MonsterPalettePanel::OnChangeSpawnMonsterSize)
 END_EVENT_TABLE()
 
 MonsterPalettePanel::MonsterPalettePanel(wxWindow* parent, wxWindowID id) :
 	PalettePanel(parent, id),
-	handling_event(false)
-{
-	
+	handling_event(false) {
+
 	wxSizer* topsizer = newd wxBoxSizer(wxVERTICAL);
 
 	wxSizer* sidesizer = newd wxStaticBoxSizer(wxVERTICAL, this, "Monsters");
 	tileset_choice = newd wxChoice(this, PALETTE_MONSTER_TILESET_CHOICE, wxDefaultPosition, wxDefaultSize, (int)0, (const wxString*)nullptr);
 	sidesizer->Add(tileset_choice, 0, wxEXPAND);
+
+	wxSizer* monsterNameSizer = newd wxStaticBoxSizer(wxHORIZONTAL, this);
+	monster_name_text = newd wxTextCtrl(this, PALETTE_MONSTER_SEARCH, "Search name", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	monster_name_text->Bind(wxEVT_SET_FOCUS, &MonsterPalettePanel::OnSetFocus, this);
+	monster_name_text->Bind(wxEVT_KILL_FOCUS, &MonsterPalettePanel::OnKillFocus, this);
+	monster_name_text->Bind(wxEVT_TEXT_ENTER, &MonsterPalettePanel::OnChangeMonsterNameSearch, this);
+
+	monster_search_button = newd wxButton(this, wxID_ANY, "Search");
+	monster_search_button->Bind(wxEVT_BUTTON, &MonsterPalettePanel::OnChangeMonsterNameSearch, this);
+
+	monsterNameSizer->Add(monster_name_text, 2, wxEXPAND);
+	monsterNameSizer->Add(monster_search_button, 1, wxEXPAND);
+	sidesizer->Add(monsterNameSizer);
 
 	monster_list = newd SortableListBox(this, PALETTE_MONSTER_LISTBOX);
 	sidesizer->Add(monster_list, 1, wxEXPAND);
@@ -58,9 +70,9 @@ MonsterPalettePanel::MonsterPalettePanel(wxWindow* parent, wxWindowID id) :
 	// Brush selection
 	sidesizer = newd wxStaticBoxSizer(newd wxStaticBox(this, wxID_ANY, "Brushes", wxDefaultPosition, wxSize(150, 200)), wxVERTICAL);
 
-	//sidesizer->Add(180, 1, wxEXPAND);
+	// sidesizer->Add(180, 1, wxEXPAND);
 
-	wxFlexGridSizer* grid = newd wxFlexGridSizer(3, 10, 10);
+	wxFlexGridSizer* grid = newd wxFlexGridSizer(4, 3, 10, 10);
 	grid->AddGrowableCol(1);
 
 	grid->Add(newd wxStaticText(this, wxID_ANY, "Spawntime"));
@@ -70,10 +82,19 @@ MonsterPalettePanel::MonsterPalettePanel(wxWindow* parent, wxWindowID id) :
 	grid->Add(monster_brush_button, 0, wxEXPAND);
 
 	grid->Add(newd wxStaticText(this, wxID_ANY, "Spawn size"));
-	spawn_monster_size_spin = newd wxSpinCtrl(this, PALETTE_MONSTER_SPAWN_SIZE, i2ws(5), wxDefaultPosition, wxSize(50, 20), wxSP_ARROW_KEYS, 1, g_settings.getInteger(Config::MAX_SPAWN_MONSTER_RADIUS), g_settings.getInteger(Config::CURRENT_SPAWN_MONSTER_RADIUS));
+	spawn_monster_size_spin = newd wxSpinCtrl(this, PALETTE_MONSTER_SPAWN_SIZE, i2ws(1), wxDefaultPosition, wxSize(50, 20), wxSP_ARROW_KEYS, 1, g_settings.getInteger(Config::MAX_SPAWN_MONSTER_RADIUS), g_settings.getInteger(Config::CURRENT_SPAWN_MONSTER_RADIUS));
 	grid->Add(spawn_monster_size_spin, 0, wxEXPAND);
 	spawn_monster_brush_button = newd wxToggleButton(this, PALETTE_SPAWN_MONSTER_BRUSH_BUTTON, "Place Spawn");
 	grid->Add(spawn_monster_brush_button, 0, wxEXPAND);
+
+	grid->Add(newd wxStaticText(this, wxID_ANY, "Spawn density %"));
+	monster_spawndensity_spin = newd wxSpinCtrl(this, PALETTE_MONSTER_SPAWN_DENSITY, i2ws(g_settings.getInteger(Config::SPAWN_MONSTER_DENSITY)), wxDefaultPosition, wxSize(50, 20), wxSP_ARROW_KEYS, 0, 3600, g_settings.getInteger(Config::SPAWN_MONSTER_DENSITY));
+	grid->Add(monster_spawndensity_spin);
+
+	grid->AddSpacer(1);
+	grid->Add(newd wxStaticText(this, wxID_ANY, "Default weight %"));
+	monsterDefaultWeight = newd wxSpinCtrl(this, PALETTE_MONSTER_DEFAULT_WEIGHT, i2ws(g_settings.getInteger(Config::MONSTER_DEFAULT_WEIGHT)), wxDefaultPosition, wxSize(50, 20), wxSP_ARROW_KEYS, 0, 100, g_settings.getInteger(Config::MONSTER_DEFAULT_WEIGHT));
+	grid->Add(monsterDefaultWeight);
 
 	sidesizer->Add(grid, 0, wxEXPAND);
 	topsizer->Add(sidesizer, 0, wxEXPAND);
@@ -82,66 +103,74 @@ MonsterPalettePanel::MonsterPalettePanel(wxWindow* parent, wxWindowID id) :
 	OnUpdate();
 }
 
-MonsterPalettePanel::~MonsterPalettePanel()
-{
-	////
+MonsterPalettePanel::~MonsterPalettePanel() {
+	monster_name_text->Unbind(wxEVT_SET_FOCUS, &MonsterPalettePanel::OnSetFocus, this);
+	monster_name_text->Unbind(wxEVT_KILL_FOCUS, &MonsterPalettePanel::OnKillFocus, this);
+	monster_name_text->Unbind(wxEVT_TEXT_ENTER, &MonsterPalettePanel::OnChangeMonsterNameSearch, this);
 }
 
-PaletteType MonsterPalettePanel::GetType() const
-{
+PaletteType MonsterPalettePanel::GetType() const {
 	return TILESET_MONSTER;
 }
 
-void MonsterPalettePanel::SelectFirstBrush()
-{
+void MonsterPalettePanel::SelectFirstBrush() {
 	SelectMonsterBrush();
 }
 
-Brush* MonsterPalettePanel::GetSelectedBrush() const
-{
-	if(monster_brush_button->GetValue()) {
-		if(monster_list->GetCount() == 0) {
+Brush* MonsterPalettePanel::GetSelectedBrush() const {
+	if (monster_brush_button->GetValue()) {
+		if (monster_list->GetCount() == 0) {
 			return nullptr;
 		}
 		Brush* brush = reinterpret_cast<Brush*>(monster_list->GetClientData(monster_list->GetSelection()));
-		if(brush && brush->isMonster()) {
+		if (brush && brush->isMonster()) {
 			g_gui.SetSpawnMonsterTime(monster_spawntime_spin->GetValue());
 			return brush;
 		}
-	} else if(spawn_monster_brush_button->GetValue()) {
+	} else if (spawn_monster_brush_button->GetValue()) {
 		g_settings.setInteger(Config::CURRENT_SPAWN_MONSTER_RADIUS, spawn_monster_size_spin->GetValue());
 		g_settings.setInteger(Config::DEFAULT_SPAWN_MONSTER_TIME, monster_spawntime_spin->GetValue());
+		g_settings.setInteger(Config::SPAWN_MONSTER_DENSITY, monster_spawndensity_spin->GetValue());
+		std::vector<MonsterBrush*> monsters;
+		wxArrayInt selectedIndices;
+		monster_list->GetCheckedItems(selectedIndices);
+		for (auto index : selectedIndices) {
+			Brush* brush = reinterpret_cast<Brush*>(monster_list->GetClientData(index));
+			if (brush && brush->isMonster()) {
+				monsters.push_back(brush->asMonster());
+			}
+		}
+		g_gui.spawn_brush->setMonsters(monsters);
 		return g_gui.spawn_brush;
 	}
 	return nullptr;
 }
 
-bool MonsterPalettePanel::SelectBrush(const Brush* whatbrush)
-{
-	if(!whatbrush)
+bool MonsterPalettePanel::SelectBrush(const Brush* whatbrush) {
+	if (!whatbrush) {
 		return false;
+	}
 
-	if(whatbrush->isMonster()) {
+	if (whatbrush->isMonster()) {
 		int current_index = tileset_choice->GetSelection();
-		if(current_index != wxNOT_FOUND) {
+		if (current_index != wxNOT_FOUND) {
 			const TilesetCategory* tsc = reinterpret_cast<const TilesetCategory*>(tileset_choice->GetClientData(current_index));
 			// Select first house
-			for(BrushVector::const_iterator iter = tsc->brushlist.begin(); iter != tsc->brushlist.end(); ++iter) {
-				if(*iter == whatbrush) {
+			for (BrushVector::const_iterator iter = tsc->brushlist.begin(); iter != tsc->brushlist.end(); ++iter) {
+				if (*iter == whatbrush) {
 					SelectMonster(whatbrush->getName());
 					return true;
 				}
 			}
 		}
 		// Not in the current display, search the hidden one's
-		for(size_t i = 0; i < tileset_choice->GetCount(); ++i) {
-			if(current_index != (int)i) {
+		for (size_t i = 0; i < tileset_choice->GetCount(); ++i) {
+			if (current_index != (int)i) {
 				const TilesetCategory* tsc = reinterpret_cast<const TilesetCategory*>(tileset_choice->GetClientData(i));
-				for(BrushVector::const_iterator iter = tsc->brushlist.begin();
-						iter != tsc->brushlist.end();
-						++iter)
-				{
-					if(*iter == whatbrush) {
+				for (BrushVector::const_iterator iter = tsc->brushlist.begin();
+					 iter != tsc->brushlist.end();
+					 ++iter) {
+					if (*iter == whatbrush) {
 						SelectTileset(i);
 						SelectMonster(whatbrush->getName());
 						return true;
@@ -149,28 +178,26 @@ bool MonsterPalettePanel::SelectBrush(const Brush* whatbrush)
 				}
 			}
 		}
-	} else if(whatbrush->isSpawnMonster()) {
+	} else if (whatbrush->isSpawnMonster()) {
 		SelectSpawnBrush();
 		return true;
 	}
 	return false;
 }
 
-int MonsterPalettePanel::GetSelectedBrushSize() const
-{
+int MonsterPalettePanel::GetSelectedBrushSize() const {
 	return spawn_monster_size_spin->GetValue();
 }
 
-void MonsterPalettePanel::OnUpdate()
-{
+void MonsterPalettePanel::OnUpdate() {
 	tileset_choice->Clear();
 	g_materials.createOtherTileset();
 
-	for(TilesetContainer::const_iterator iter = g_materials.tilesets.begin(); iter != g_materials.tilesets.end(); ++iter) {
+	for (TilesetContainer::const_iterator iter = g_materials.tilesets.begin(); iter != g_materials.tilesets.end(); ++iter) {
 		const TilesetCategory* tsc = iter->second->getCategory(TILESET_MONSTER);
-		if(tsc && tsc->size() > 0) {
+		if (tsc && tsc->size() > 0) {
 			tileset_choice->Append(wxstr(iter->second->name), const_cast<TilesetCategory*>(tsc));
-		} else if(iter->second->name == "Others") {
+		} else if (iter->second->name == "Others") {
 			Tileset* ts = const_cast<Tileset*>(iter->second);
 			TilesetCategory* rtsc = ts->getCategory(TILESET_MONSTER);
 			tileset_choice->Append(wxstr(ts->name), rtsc);
@@ -179,32 +206,27 @@ void MonsterPalettePanel::OnUpdate()
 	SelectTileset(0);
 }
 
-void MonsterPalettePanel::OnUpdateBrushSize(BrushShape shape, int size)
-{
+void MonsterPalettePanel::OnUpdateBrushSize(BrushShape shape, int size) {
 	return spawn_monster_size_spin->SetValue(size);
 }
 
-void MonsterPalettePanel::OnSwitchIn()
-{
+void MonsterPalettePanel::OnSwitchIn() {
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SetBrushSize(spawn_monster_size_spin->GetValue());
 }
 
-void MonsterPalettePanel::SelectTileset(size_t index)
-{
+void MonsterPalettePanel::SelectTileset(size_t index) {
 	ASSERT(tileset_choice->GetCount() >= index);
 
 	monster_list->Clear();
-	if(tileset_choice->GetCount() == 0) {
+	if (tileset_choice->GetCount() == 0) {
 		// No tilesets :(
 		monster_brush_button->Enable(false);
 	} else {
 		const TilesetCategory* tsc = reinterpret_cast<const TilesetCategory*>(tileset_choice->GetClientData(index));
-		// Select first house
-		for(BrushVector::const_iterator iter = tsc->brushlist.begin();
-				iter != tsc->brushlist.end();
-				++iter)
-		{
+		for (BrushVector::const_iterator iter = tsc->brushlist.begin();
+			 iter != tsc->brushlist.end();
+			 ++iter) {
 			monster_list->Append(wxstr((*iter)->getName()), *iter);
 		}
 		monster_list->Sort();
@@ -214,22 +236,20 @@ void MonsterPalettePanel::SelectTileset(size_t index)
 	}
 }
 
-void MonsterPalettePanel::SelectMonster(size_t index)
-{
+void MonsterPalettePanel::SelectMonster(size_t index) {
 	// Save the old g_settings
 	ASSERT(monster_list->GetCount() >= index);
 
-	if(monster_list->GetCount() > 0) {
+	if (monster_list->GetCount() > 0) {
 		monster_list->SetSelection(index);
 	}
 
 	SelectMonsterBrush();
 }
 
-void MonsterPalettePanel::SelectMonster(std::string name)
-{
-	if(monster_list->GetCount() > 0) {
-		if(!monster_list->SetStringSelection(wxstr(name))) {
+void MonsterPalettePanel::SelectMonster(std::string name) {
+	if (monster_list->GetCount() > 0) {
+		if (!monster_list->SetStringSelection(wxstr(name))) {
 			monster_list->SetSelection(0);
 		}
 	}
@@ -237,9 +257,8 @@ void MonsterPalettePanel::SelectMonster(std::string name)
 	SelectMonsterBrush();
 }
 
-void MonsterPalettePanel::SelectMonsterBrush()
-{
-	if(monster_list->GetCount() > 0) {
+void MonsterPalettePanel::SelectMonsterBrush() {
+	if (monster_list->GetCount() > 0) {
 		monster_brush_button->Enable(true);
 		monster_brush_button->SetValue(true);
 		spawn_monster_brush_button->SetValue(false);
@@ -249,53 +268,79 @@ void MonsterPalettePanel::SelectMonsterBrush()
 	}
 }
 
-void MonsterPalettePanel::SelectSpawnBrush()
-{
-	//g_gui.house_exit_brush->setHouse(house);
+void MonsterPalettePanel::SelectSpawnBrush() {
+	// g_gui.house_exit_brush->setHouse(house);
 	monster_brush_button->SetValue(false);
 	spawn_monster_brush_button->SetValue(true);
 }
 
-void MonsterPalettePanel::OnTilesetChange(wxCommandEvent& event)
-{
+void MonsterPalettePanel::OnTilesetChange(wxCommandEvent &event) {
 	SelectTileset(event.GetSelection());
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SelectBrush();
 }
 
-void MonsterPalettePanel::OnListBoxChange(wxCommandEvent& event)
-{
+void MonsterPalettePanel::OnListBoxChange(wxCommandEvent &event) {
 	SelectMonster(event.GetSelection());
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SelectBrush();
 }
 
-void MonsterPalettePanel::OnClickMonsterBrushButton(wxCommandEvent& event)
-{
+void MonsterPalettePanel::OnClickMonsterBrushButton(wxCommandEvent &event) {
 	SelectMonsterBrush();
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SelectBrush();
 }
 
-void MonsterPalettePanel::OnClickSpawnMonsterBrushButton(wxCommandEvent& event)
-{
+void MonsterPalettePanel::OnClickSpawnMonsterBrushButton(wxCommandEvent &event) {
 	SelectSpawnBrush();
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SelectBrush();
 }
 
-void MonsterPalettePanel::OnChangeSpawnMonsterTime(wxSpinEvent& event)
-{
+void MonsterPalettePanel::OnChangeSpawnMonsterTime(wxSpinEvent &event) {
 	g_gui.ActivatePalette(GetParentPalette());
 	g_gui.SetSpawnMonsterTime(event.GetPosition());
 }
 
-void MonsterPalettePanel::OnChangeSpawnMonsterSize(wxSpinEvent& event)
-{
-	if(!handling_event) {
+void MonsterPalettePanel::OnChangeSpawnMonsterSize(wxSpinEvent &event) {
+	if (!handling_event) {
 		handling_event = true;
 		g_gui.ActivatePalette(GetParentPalette());
 		g_gui.SetBrushSize(event.GetPosition());
 		handling_event = false;
 	}
+}
+
+void MonsterPalettePanel::OnSetFocus(wxFocusEvent &event) {
+	g_gui.DisableHotkeys();
+	event.Skip();
+}
+
+void MonsterPalettePanel::OnKillFocus(wxFocusEvent &event) {
+	g_gui.EnableHotkeys();
+	event.Skip();
+}
+
+void MonsterPalettePanel::OnChangeMonsterNameSearch(wxCommandEvent &event) {
+	const auto monsterNameSearch = as_lower_str(monster_name_text->GetValue().ToStdString());
+
+	const auto index = tileset_choice->GetSelection();
+
+	if (monsterNameSearch.empty()) {
+		SelectTileset(index);
+		return;
+	}
+
+	monster_list->Clear();
+	const auto tilesetCategory = reinterpret_cast<const TilesetCategory*>(tileset_choice->GetClientData(index));
+	for (auto it = tilesetCategory->brushlist.begin(); it != tilesetCategory->brushlist.end(); ++it) {
+		const auto monsterName = wxstr((*it)->getName());
+		const auto regexPattern = std::regex(monsterNameSearch);
+		if (std::regex_search(as_lower_str(monsterName.ToStdString()), regexPattern)) {
+			monster_list->Append(monsterName, *it);
+		}
+	}
+	monster_list->Sort();
+	Update();
 }

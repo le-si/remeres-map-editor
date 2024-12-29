@@ -100,6 +100,9 @@ target_sources(${PROJECT_NAME}
 	PRIVATE
 	about_window.cpp
 	action.cpp
+	actions_history_window.cpp
+	add_item_window.cpp
+	add_tileset_window.cpp
 	application.cpp
 	artprovider.cpp
 	basemap.cpp
@@ -133,8 +136,10 @@ target_sources(${PROJECT_NAME}
 	house_brush.cpp
 	house.cpp
 	house_exit_brush.cpp
+	light_drawer.cpp
 	iomap.cpp
 	iomap_otbm.cpp
+	iominimap.cpp
 	item_attributes.cpp
 	item.cpp
 	items.cpp
@@ -168,6 +173,7 @@ target_sources(${PROJECT_NAME}
 	palette_house.cpp
 	palette_npc.cpp
 	palette_waypoints.cpp
+	palette_zones.cpp
 	palette_window.cpp
 	pngfiles.cpp
 	preferences.cpp
@@ -190,12 +196,15 @@ target_sources(${PROJECT_NAME}
 	templatemapclassic.cpp
 	tile.cpp
 	tileset.cpp
+	tileset_window.cpp
 	town.cpp
 	updater.cpp
 	wall_brush.cpp
 	waypoint_brush.cpp
 	waypoints.cpp
 	welcome_dialog.cpp
+	zone_brush.cpp
+	zones.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

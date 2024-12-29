@@ -10,9 +10,11 @@ build-release
 CMakeLists.txt.user*
 
 # RME
+remeres
 rme
 rme.cfg
 data/user
+world
 
 # Visual Studio
 *.MAP
@@ -26,6 +28,7 @@ data/user
 *.opendb
 *.vs
 
+vcproj/generated/
 vcproj/ipch/
 vcproj/Beta Release/
 vcproj/Debug/
@@ -38,6 +41,7 @@ vcproj/Project/x64/
 vcproj/Installer/Beta Release/
 vcproj/Installer/Debug/
 vcproj/Installer/Release/
+vcpkg_installed/
 .vscode/
 *.filters
 *.users
@@ -58,3 +62,4 @@ cmake-build-debug/
 vcpkg_installed/
 *.ilk
 remeres.exe.manifest
+remeres

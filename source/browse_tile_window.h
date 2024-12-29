@@ -22,28 +22,70 @@
 #include "map.h"
 #include "tile.h"
 
-class BrowseTileListBox;
+using ItemsMap = std::map<int, Item*>;
 
-class BrowseTileWindow : public wxDialog
-{
+class BrowseTileListBox : public wxVListBox {
+public:
+	BrowseTileListBox(wxWindow* parent, wxWindowID id, Tile* tile);
+	~BrowseTileListBox() = default;
+
+	void OnDrawItem(wxDC &dc, const wxRect &rect, size_t index) const;
+	wxCoord OnMeasureItem(size_t index) const;
+	Item* GetSelectedItem();
+	void RemoveSelected();
+	void OnItemDoubleClick(wxCommandEvent &);
+
+	Tile* GetTile() const noexcept {
+		return editTile;
+	}
+
+	ItemsMap GetItems() const noexcept {
+		return items;
+	}
+
+	void OpenPropertiesWindow(int index);
+
+	void UpdateItems();
+
+protected:
+	ItemsMap items;
+	Tile* editTile = nullptr;
+
+	DECLARE_EVENT_TABLE();
+};
+
+class BrowseTileWindow : public wxDialog {
 public:
 	BrowseTileWindow(wxWindow* parent, Tile* tile, wxPoint position = wxDefaultPosition);
 	~BrowseTileWindow();
 
-	void OnItemSelected(wxCommandEvent&);
-	void OnClickDelete(wxCommandEvent&);
-	void OnClickSelectRaw(wxCommandEvent&);
-	void OnClickOK(wxCommandEvent&);
-	void OnClickCancel(wxCommandEvent&);
+	void OnItemSelected(wxCommandEvent &);
+	void OnClickDelete(wxCommandEvent &);
+	void OnClickSelectRaw(wxCommandEvent &);
+	void OnClickProperties(wxCommandEvent &);
+	void OnClickOK(wxCommandEvent &);
+	void OnClickCancel(wxCommandEvent &);
+	void OnButtonUpClick(wxCommandEvent &);
+	void OnButtonDownClick(wxCommandEvent &);
+
+	void ChangeItemIndex(bool up = true);
+	void UpdateButtons(int selection);
 
 protected:
-	BrowseTileListBox* item_list;
-	wxStaticText* item_count_txt;
-	wxButton* delete_button;
-	wxButton* select_raw_button;
+	void AddTopOrderButtons(wxSizer* sizer);
+	void AddActionButtons(wxSizer* sizer);
+	void AddInformations(wxSizer* sizer);
+
+	friend class BrowseTileListBox;
+	BrowseTileListBox* itemList = nullptr;
+	wxStaticText* itemCountText = nullptr;
+	wxButton* deleteButton = nullptr;
+	wxButton* selectRawButton = nullptr;
+	wxButton* propertiesButton = nullptr;
+	wxButton* upButton = nullptr;
+	wxButton* downButton = nullptr;
 
 	DECLARE_EVENT_TABLE();
 };
 
 #endif
-

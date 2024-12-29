@@ -29,35 +29,31 @@
 
 MonsterBrush::MonsterBrush(MonsterType* type) :
 	Brush(),
-	monster_type(type)
-{
+	monster_type(type) {
 	ASSERT(type->brush == nullptr);
 	type->brush = this;
 }
 
-MonsterBrush::~MonsterBrush()
-{
+MonsterBrush::~MonsterBrush() {
 	////
 }
 
-int MonsterBrush::getLookID() const
-{
+int MonsterBrush::getLookID() const {
 	return 0;
 }
 
-std::string MonsterBrush::getName() const
-{
-	if(monster_type)
+std::string MonsterBrush::getName() const {
+	if (monster_type) {
 		return monster_type->name;
+	}
 	return "Monster Brush";
 }
 
-bool MonsterBrush::canDraw(BaseMap* map, const Position& position) const
-{
+bool MonsterBrush::canDraw(BaseMap* map, const Position &position) const {
 	Tile* tile = map->getTile(position);
-	if(monster_type && tile && !tile->isBlocking()) {
-		if(tile->getLocation()->getSpawnMonsterCount() != 0 || g_settings.getInteger(Config::AUTO_CREATE_SPAWN_MONSTER)) {
- 			if(tile->isPZ()) {
+	if (monster_type && tile && !tile->isBlocking()) {
+		if (tile->getLocation()->getSpawnMonsterCount() != 0 || g_settings.getInteger(Config::AUTO_CREATE_SPAWN_MONSTER)) {
+			if (tile->isPZ()) {
 				return false;
 			} else {
 				return true;
@@ -67,25 +63,37 @@ bool MonsterBrush::canDraw(BaseMap* map, const Position& position) const
 	return false;
 }
 
-void MonsterBrush::undraw(BaseMap* map, Tile* tile)
-{
-	delete tile->monster;
-	tile->monster = nullptr;
+void MonsterBrush::undraw(BaseMap* map, Tile* tile) {
+	// It does nothing
 }
 
-void MonsterBrush::draw(BaseMap* map, Tile* tile, void* parameter)
-{
+void MonsterBrush::drawMonster(BaseMap* map, Tile* tile, void* parameter) {
 	ASSERT(tile);
 	ASSERT(parameter);
-	if(canDraw(map, tile->getPosition())) {
-		undraw(map, tile);
-		if(monster_type) {
-			if(tile->spawnMonster == nullptr && tile->getLocation()->getSpawnMonsterCount() == 0) {
+	if (tile && canDraw(map, tile->getPosition())) {
+		if (monster_type) {
+			const auto it = std::ranges::find_if(tile->monsters, [&](const auto monster) {
+				return strcmp(monster->getTypeName().c_str(), monster_type->name.c_str()) == 0;
+			});
+			if (it == tile->monsters.end()) {
+				const auto monster = newd Monster(monster_type);
+				monster->setSpawnMonsterTime(*(int*)parameter);
+				tile->monsters.emplace_back(monster);
+			}
+		}
+	}
+}
+
+void MonsterBrush::draw(BaseMap* map, Tile* tile, void* parameter) {
+	ASSERT(tile);
+	ASSERT(parameter);
+	if (tile && canDraw(map, tile->getPosition())) {
+		if (monster_type) {
+			if (tile->spawnMonster == nullptr && tile->getLocation()->getSpawnMonsterCount() == 0) {
 				// manually place spawnMonster on location
 				tile->spawnMonster = newd SpawnMonster(1);
 			}
-			tile->monster = newd Monster(monster_type);
-			tile->monster->setSpawnMonsterTime(*(int*)parameter);
+			drawMonster(map, tile, parameter);
 		}
 	}
 }

@@ -29,15 +29,22 @@
 
 class FindDialogListBox;
 
-class FindItemDialog : public wxDialog
-{
+class FindItemDialog : public wxDialog {
 public:
 	enum SearchMode {
 		ServerIDs = 0,
 		ClientIDs,
 		Names,
 		Types,
+		TileTypes,
 		Properties,
+	};
+
+	enum SearchTileType {
+		ProtectionZone,
+		PlayerVsPlayer,
+		NoPlayerVsPlayer,
+		NoLogout
 	};
 
 	enum SearchItemType {
@@ -52,60 +59,67 @@ public:
 		Key
 	};
 
-	FindItemDialog(wxWindow* parent, const wxString& title, bool onlyPickupables = false);
+	FindItemDialog(wxWindow* parent, const wxString &title, bool onlyPickupables = false, bool onSelection = false);
 	~FindItemDialog();
 
-	Brush* getResult() const { return result_brush; }
-	uint16_t getResultID() const { return result_id; }
+	Brush* getResult() const noexcept {
+		return resultBrush;
+	}
+	uint16_t getResultID() const noexcept {
+		return resultId;
+	}
 
 	SearchMode getSearchMode() const;
+	SearchTileType getSearchTileType() const;
 	void setSearchMode(SearchMode mode);
 
 private:
 	void EnableProperties(bool enable);
 	void RefreshContentsInternal();
 
-	void OnOptionChange(wxCommandEvent& event);
-	void OnServerIdChange(wxCommandEvent& event);
-	void OnClientIdChange(wxCommandEvent& event);
-	void OnText(wxCommandEvent& event);
-	void OnTypeChange(wxCommandEvent& event);
-	void OnPropertyChange(wxCommandEvent& event);
-	void OnInputTimer(wxTimerEvent& event);
-	void OnClickOK(wxCommandEvent& event);
-	void OnClickCancel(wxCommandEvent& event);
+	void OnOptionChange(wxCommandEvent &event);
+	void OnServerIdChange(wxCommandEvent &event);
+	void OnClientIdChange(wxCommandEvent &event);
+	void OnText(wxCommandEvent &event);
+	void OnTypeChange(wxCommandEvent &event);
+	void OnPropertyChange(wxCommandEvent &event);
+	void OnInputTimer(wxTimerEvent &event);
+	void OnClickOK(wxCommandEvent &event);
+	void OnClickCancel(wxCommandEvent &event);
 
-	wxRadioBox* options_radio_box;
+	wxRadioBox* optionsRadioBox;
 
-	wxRadioBox* types_radio_box;
+	wxRadioBox* typesRadioBox;
+	wxRadioBox* tileTypesRadioBox;
 
-	wxSpinCtrl* server_id_spin;
-	wxSpinCtrl* client_id_spin;
-	wxTextCtrl* name_text_input;
-	wxTimer input_timer;
+	wxSpinCtrl* serverIdSpin;
+	wxSpinCtrl* clientIdSpin;
+	wxTextCtrl* nameTextInput;
+	wxTimer inputTimer;
 	wxCheckBox* unpassable;
 	wxCheckBox* unmovable;
-	wxCheckBox* block_missiles;
-	wxCheckBox* block_pathfinder;
+	wxCheckBox* blockMissiles;
+	wxCheckBox* blockPathfinder;
 	wxCheckBox* readable;
 	wxCheckBox* writeable;
 	wxCheckBox* pickupable;
 	wxCheckBox* stackable;
 	wxCheckBox* rotatable;
 	wxCheckBox* hangable;
-	wxCheckBox* hook_east;
-	wxCheckBox* hook_south;
-	wxCheckBox* has_elevation;
-	wxCheckBox* ignore_look;
-	wxCheckBox* floor_change;
+	wxCheckBox* hookEast;
+	wxCheckBox* hookSouth;
+	wxCheckBox* hasElevation;
+	wxCheckBox* ignoreLook;
+	wxCheckBox* floorChange;
 
-	FindDialogListBox* items_list;
-	wxStdDialogButtonSizer* buttons_box_sizer;
-	wxButton* ok_button;
-	wxButton* cancel_button;
-	Brush* result_brush;
-	uint16_t result_id;
-	bool only_pickupables;
+	FindDialogListBox* itemsList;
+	wxStdDialogButtonSizer* buttonsBoxSizer;
+	wxButton* okButton;
+	wxButton* cancelButton;
+	Brush* resultBrush = nullptr;
+	uint16_t resultId = 0;
+	bool onlyPickupables = false;
+	bool onSelection = false;
 
 	DECLARE_EVENT_TABLE()
 };

@@ -19,108 +19,88 @@
 #include "numbertextctrl.h"
 
 BEGIN_EVENT_TABLE(NumberTextCtrl, wxTextCtrl)
-	EVT_KILL_FOCUS(NumberTextCtrl::OnKillFocus)
-	EVT_TEXT_ENTER(wxID_ANY, NumberTextCtrl::OnTextEnter)
+EVT_KILL_FOCUS(NumberTextCtrl::OnKillFocus)
+EVT_TEXT_ENTER(wxID_ANY, NumberTextCtrl::OnTextEnter)
+EVT_TEXT(wxID_ANY, NumberTextCtrl::EnsureOnlyNumbers)
 END_EVENT_TABLE()
 
-NumberTextCtrl::NumberTextCtrl(wxWindow* parent, wxWindowID id,
-		long value, long minvalue, long maxvalue,
-		const wxPoint& pos, const wxSize& sz,
-		long style, const wxString& name) :
-	wxTextCtrl(parent, id, (wxString() << value), pos, sz, style, wxTextValidator(wxFILTER_NUMERIC), name),
-	minval(minvalue), maxval(maxvalue), lastval(value)
-{
-	////
-}
-
-NumberTextCtrl::NumberTextCtrl(wxWindow* parent, wxWindowID id,
-		long value, long minvalue, long maxvalue,
-		long style, const wxString& name,
-		const wxPoint& pos, const wxSize& sz) :
-	wxTextCtrl(parent, id, (wxString() << value), pos, sz, style, wxTextValidator(wxFILTER_NUMERIC), name),
-	minval(minvalue), maxval(maxvalue), lastval(value)
-{
-	////
-}
-
-NumberTextCtrl::~NumberTextCtrl()
-{
-	////
-}
-
-void NumberTextCtrl::OnKillFocus(wxFocusEvent& evt)
-{
+void NumberTextCtrl::OnKillFocus(wxFocusEvent &evt) {
 	CheckRange();
 	evt.Skip();
 }
 
-void NumberTextCtrl::OnTextEnter(wxCommandEvent& evt)
-{
-	CheckRange();
-}
-
-void NumberTextCtrl::SetIntValue(long value)
-{
-	wxString sv;
-	sv << value;
-	// Will generate events
-	SetValue(sv);
-}
-
-long NumberTextCtrl::GetIntValue()
-{
-	long l;
-	if(GetValue().ToLong(&l))
-		return l;
-	return 0;
-}
-
-void NumberTextCtrl::SetMinValue(long value)
-{
-	if(value == minval)
-		return;
-	minval = value;
-	CheckRange();
-}
-
-void NumberTextCtrl::SetMaxValue(long value)
-{
-	if(value == maxval)
-		return;
-	maxval = value;
-	CheckRange();
-}
-
-void NumberTextCtrl::CheckRange()
-{
-	wxString text = GetValue();
-	wxString ntext;
-
-	for(size_t s = 0; s < text.size(); ++s) {
-		if(text[s] >= '0' && text[s] <= '9')
-			ntext.Append(text[s]);
+wxString NumberTextCtrl::TextFilterDigits(const wxString &text) {
+	wxString newText;
+	for (size_t position = 0; position < text.size(); ++position) {
+		if (text[position] >= '0' && text[position] <= '9') {
+			newText.Append(text[position]);
+		}
 	}
+
+	return newText;
+}
+
+void NumberTextCtrl::EnsureOnlyNumbers(wxCommandEvent &evt) {
+	const auto newText = TextFilterDigits(GetValue().ToStdString());
+
+	ChangeValue(newText);
+}
+
+void NumberTextCtrl::OnTextEnter(wxCommandEvent &evt) {
+	CheckRange();
+}
+
+void NumberTextCtrl::SetIntValue(long value) {
+	// Will generate events
+	SetValue(wxString::Format("%i", value));
+}
+
+long NumberTextCtrl::GetIntValue() {
+	long l;
+	return GetValue().ToLong(&l) ? l : 0;
+}
+
+void NumberTextCtrl::SetMinValue(long value) {
+	if (value == minValue) {
+		return;
+	}
+	minValue = value;
+	CheckRange();
+}
+
+void NumberTextCtrl::SetMaxValue(long value) {
+	if (value == maxValue) {
+		return;
+	}
+	maxValue = value;
+	CheckRange();
+}
+
+void NumberTextCtrl::CheckRange() {
+	auto text = GetValue().ToStdString();
+
+	auto newText = TextFilterDigits(text);
 
 	// Check that value is in range
 	long v;
-	if(ntext.size() != 0 && ntext.ToLong(&v)) {
-		if(v < minval)
-			v = minval;
-		else if(v > maxval)
-			v = maxval;
+	if (newText.size() != 0 && newText.ToLong(&v)) {
+		if (v < minValue) {
+			v = minValue;
+		} else if (v > maxValue) {
+			v = maxValue;
+		}
 
-		ntext.clear();
-		ntext << v;
-		lastval = v;
+		newText.clear();
+		newText = wxString::Format("%i", v);
+		lastValue = v;
 	} else {
-		ntext.clear();
-		ntext << lastval;
+		newText.clear();
+		newText = wxString::Format("%i", lastValue);
 	}
 
 	// Check if there was any change
-	if(ntext != text) {
+	if (newText != text) {
 		// ChangeValue doesn't generate events
-		ChangeValue(ntext);
+		ChangeValue(newText);
 	}
 }
-

@@ -15,25 +15,24 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////
 
-
 #ifndef RME_PREFERENCES_WINDOW_H_
 #define RME_PREFERENCES_WINDOW_H_
 
 #include "main.h"
 
-class PreferencesWindow : public wxDialog
-{
+class PreferencesWindow : public wxDialog {
 public:
-	explicit PreferencesWindow(wxWindow* parent) : PreferencesWindow(parent, false) {};
-    PreferencesWindow(wxWindow* parent, bool clientVersionSelected);
+	explicit PreferencesWindow(wxWindow* parent) :
+		PreferencesWindow(parent, false) {};
+	PreferencesWindow(wxWindow* parent, bool clientVersionSelected);
 	virtual ~PreferencesWindow();
 
-	void OnClickDefaults(wxCommandEvent&);
-	void OnClickApply(wxCommandEvent&);
-	void OnClickOK(wxCommandEvent&);
-	void OnClickCancel(wxCommandEvent&);
+	void OnClickDefaults(wxCommandEvent &);
+	void OnClickApply(wxCommandEvent &);
+	void OnClickOK(wxCommandEvent &);
+	void OnClickCancel(wxCommandEvent &);
 
-	void OnCollapsiblePane(wxCollapsiblePaneEvent&);
+	void OnCollapsiblePane(wxCollapsiblePaneEvent &);
 
 protected:
 	void SetDefaults();
@@ -47,11 +46,14 @@ protected:
 	wxCheckBox* update_check_on_startup_chkbox;
 	wxCheckBox* only_one_instance_chkbox;
 	wxCheckBox* show_welcome_dialog_chkbox;
+	wxCheckBox* enable_tileset_editing_chkbox;
 	wxSpinCtrl* undo_size_spin;
 	wxSpinCtrl* undo_mem_size_spin;
 	wxSpinCtrl* worker_threads_spin;
 	wxSpinCtrl* replace_size_spin;
+	wxSpinCtrl* delete_backup_days_spin;
 	wxRadioBox* position_format;
+	wxRadioBox* area_format;
 
 	// Editor
 	wxCheckBox* group_actions_chkbox;
@@ -59,6 +61,8 @@ protected:
 	wxCheckBox* house_remove_chkbox;
 	wxCheckBox* auto_assign_doors_chkbox;
 	wxCheckBox* eraser_leave_unique_chkbox;
+	wxCheckBox* eraserKeepZonesCheckbox = nullptr;
+	wxCheckBox* eraserKeepMapFlagsCheckbox = nullptr;
 	wxCheckBox* doodad_erase_same_chkbox;
 	wxCheckBox* auto_create_spawn_chkbox;
 	wxCheckBox* auto_create_spawn_npc_chkbox;
@@ -70,6 +74,8 @@ protected:
 	wxCheckBox* icon_selection_shadow_chkbox;
 	wxChoice* icon_background_choice;
 	wxCheckBox* use_memcached_chkbox;
+	wxTextCtrl* palette_icons_col_size;
+	wxTextCtrl* palette_icons_row_size;
 	wxDirPickerCtrl* screenshot_directory_picker;
 	wxChoice* screenshot_format_choice;
 	wxCheckBox* hide_items_when_zoomed_chkbox;
@@ -110,7 +116,7 @@ protected:
 	wxCheckBox* check_sigs_chkbox;
 
 	// Create controls
-	wxChoice* AddPaletteStyleChoice(wxWindow* parent, wxSizer* sizer, const wxString& short_description, const wxString& description, const std::string& setting);
+	wxChoice* AddPaletteStyleChoice(wxWindow* parent, wxSizer* sizer, const wxString &short_description, const wxString &description, const std::string &setting);
 	void SetPaletteStyleChoice(wxChoice* ctrl, int key);
 
 	// Create windows

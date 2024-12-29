@@ -27,28 +27,37 @@ public:
 
 	void clear();
 
-	const MaterialsExtensionList& getExtensions();
+	const MaterialsExtensionList &getExtensions();
 	MaterialsExtensionList getExtensionsByVersion(uint16_t version_id);
 
 	TilesetContainer tilesets;
 
-	bool loadMaterials(const FileName& identifier, wxString& error, wxArrayString& warnings);
-	bool loadExtensions(FileName identifier, wxString& error, wxArrayString& warnings);
+	bool loadMaterials(const FileName &identifier, wxString &error, wxArrayString &warnings);
+	bool loadExtensions(FileName identifier, wxString &error, wxArrayString &warnings);
 	void createOtherTileset();
+	void addToTileset(std::string tilesetName, int itemId, TilesetCategoryType categoryType);
 	void createNpcTileset();
 
 	bool isInTileset(Item* item, std::string tileset) const;
 	bool isInTileset(Brush* brush, std::string tileset) const;
+	bool needSave() const {
+		return modified;
+	}
+
+	void modify(bool newValue = true) {
+		this->modified = newValue;
+	}
 
 protected:
-	bool unserializeMaterials(const FileName& filename, pugi::xml_node node, wxString& error, wxArrayString& warnings);
-	bool unserializeTileset(pugi::xml_node node, wxArrayString& warnings);
+	bool unserializeMaterials(const FileName &filename, pugi::xml_node node, wxString &error, wxArrayString &warnings);
+	bool unserializeTileset(pugi::xml_node node, wxArrayString &warnings);
 
 	MaterialsExtensionList extensions;
 
 private:
-	Materials(const Materials&);
-	Materials& operator=(const Materials&);
+	bool modified = false;
+	Materials(const Materials &);
+	Materials &operator=(const Materials &);
 };
 
 extern Materials g_materials;
